@@ -10,7 +10,6 @@ pipeline {
         REMOTE_PATH    = '/home/ubuntu/node-app'
     }
     
-    
     stages {
         stage('Clone Repository') {
             steps {
@@ -19,15 +18,14 @@ pipeline {
         }
 
         stage('Upload Files to target-server') {
-        steps {
-        sshagent([SSH_CREDENTIAL]) {
-            sh """
-                rsync -avz --delete -e "ssh -o StrictHostKeyChecking=no" ./ ${REMOTE_USER}@${SERVER_IP}:${REMOTE_PATH}/
-            """
+            steps {
+                sshagent([SSH_CREDENTIAL]) {
+                    sh """
+                        rsync -avz --delete -e "ssh -o StrictHostKeyChecking=no" ./ ${REMOTE_USER}@${SERVER_IP}:${REMOTE_PATH}/
+                    """
+                }
+            }
         }
-        
-        }
-    }
 
         stage('Install Dependencies & Start App on the target server') {
             steps {
@@ -36,7 +34,7 @@ pipeline {
                         ssh -o StrictHostKeyChecking=no ${REMOTE_USER}@${SERVER_IP} '
                             cd ${REMOTE_PATH} &&
                             npm install &&
-                            pm2 start app.js --name node-app || pm2 restart node-app
+                            pm2 describe node-app > /dev/null 2>&1 && pm2 restart node-app || pm2 start app.js --name node-app
                         '
                     """
                 }
@@ -53,6 +51,3 @@ pipeline {
         }
     }
 }
-
-
-
